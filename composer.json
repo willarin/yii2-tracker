@@ -1,0 +1,30 @@
+{
+    "name": "solutlux/yii2-tracker",
+    "description": "tracking user sessions",
+    "keywords": [
+        "yii2",
+        "session",
+        "tracker"
+    ],
+    "type": "yii2-extension",
+    "homepage": "https://github.com/solutlux/yii2-tracker",
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Dmitriy Evdokimov",
+            "email": "dmitriy@solutlux.com",
+            "homepage": "https://solutlux.com",
+            "role": "Developer"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=7.1",
+        "yiisoft/yii2": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "solutlux\\yii2tracker\\": ""
+        }
+    }
+}
