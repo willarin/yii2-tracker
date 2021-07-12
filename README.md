@@ -12,13 +12,13 @@ The preferred way to install this extension is through [composer](http://getcomp
 Either run
 
 ```
-$ php composer.phar require solutlux/yii2-tracker "*"
+$ php composer.phar require willarin/yii2-tracker "*"
 ```
 
 or add
 
 ```
-"solutlux/yii2-tracker": "*"
+"willarin/yii2-tracker": "*"
 ```
 
 to the required section of your `composer.json` file.

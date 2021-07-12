@@ -1,5 +1,5 @@
 {
-    "name": "solutlux/yii2-tracker",
+    "name": "willarin/yii2-tracker",
     "description": "tracking user sessions",
     "keywords": [
         "yii2",
@@ -7,7 +7,7 @@
         "tracker"
     ],
     "type": "yii2-extension",
-    "homepage": "https://github.com/solutlux/yii2-tracker",
+    "homepage": "https://github.com/willarin/yii2-tracker",
     "license": "BSD-3-Clause",
     "authors": [
         {
@@ -24,7 +24,7 @@
     },
     "autoload": {
         "psr-4": {
-            "solutlux\\yii2tracker\\": ""
+            "willarin\\yii2tracker\\": ""
         }
     }
 }
