@@ -24,7 +24,7 @@
     },
     "autoload": {
         "psr-4": {
-            "willarin\\yii2tracker\\": ""
+            "willarin\\tracker\\": ""
         }
     }
 }
