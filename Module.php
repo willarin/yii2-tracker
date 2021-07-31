@@ -19,7 +19,9 @@ class Module extends \yii\base\Module
     public $settings = [];
 
     /**
-     * @var array list of tracking schemas available
+     * @var array list of tracking events
      */
-    public $trackers = [];
+    public $events = [];
+    
+    
 }
