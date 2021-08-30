@@ -45,8 +45,8 @@ class Event extends Model
         $result = false;
         $tracking = \Yii::$app->getModule('tracking');
         if ($tracking) {
-            if ((isset($tracking->events[$eventId])) and is_array($tracking->events[$eventId])) {
-                $result = new self(['trackingCodes' => $tracking->events[$eventId]]);
+            if ((isset($tracking->events[$eventId]['trackingCodes'])) and is_array($tracking->events[$eventId]['trackingCodes'])) {
+                $result = new self($tracking->events[$eventId]);
             }
         }
     
