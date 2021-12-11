@@ -1,11 +1,12 @@
 <?php
 /**
- * @copyright Copyright (c) 2020 Solutlux LLC
+ * @copyright Copyright (c) 2021 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
 namespace willarin\tracker\models;
 
+use Yii;
 use yii\base\Model;
 
 /**
@@ -43,16 +44,16 @@ class Event extends Model
     public static function getEvent($eventId)
     {
         $result = false;
-        $tracking = \Yii::$app->getModule('tracking');
+        $tracking = Yii::$app->getModule('tracking');
         if ($tracking) {
             if ((isset($tracking->events[$eventId]['trackingCodes'])) and is_array($tracking->events[$eventId]['trackingCodes'])) {
                 $result = new self($tracking->events[$eventId]);
             }
         }
-    
+        
         return $result;
     }
-   
+    
     /**
      * @return array
      */

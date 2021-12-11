@@ -20,7 +20,10 @@
     "minimum-stability": "dev",
     "require": {
         "php": ">=7.1",
-        "yiisoft/yii2": "*"
+        "ext-json": "*",
+        "yiisoft/yii2": "*",
+        "bariew/yii2-event-component": "*",
+        "jenssegers/agent": "3.0.x-dev"
     },
     "autoload": {
         "psr-4": {
