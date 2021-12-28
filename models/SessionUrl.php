@@ -11,6 +11,7 @@ namespace willarin\tracker\models;
 
 use Yii;
 use yii\behaviors\TimestampBehavior;
+use yii\db\ActiveQueryInterface;
 use yii\db\ActiveRecord;
 use yii\db\Expression;
 
@@ -29,17 +30,37 @@ class SessionUrl extends ActiveRecord
     }
     
     /**
+     * {@inheritdoc}
+     */
+    public function behaviors()
+    {
+        return [
+            [
+                'class' => TimestampBehavior::class,
+                'createdAtAttribute' => 'createDate',
+                'updatedAtAttribute' => false,
+                'value' => new Expression('NOW()'),
+            ],
+        ];
+    }
+    
+    /**
      * save user's url visit
+     *
+     * @return bool/SessionUrl
      */
     public static function saveUrlVisit()
     {
         $session = Session::getCurrent();
+        $result = false;
         if ($session) {
             $sessionUrl = new self();
             $sessionUrl->sessionId = $session->id;
-            $sessionUrl->visitedUrl = Yii::$app->request->getAbsoluteUrl();
+            $sessionUrl->visitedUrl = urldecode(Yii::$app->request->getAbsoluteUrl());
             $sessionUrl->save();
+            $result = $sessionUrl;
         }
+        return $result;
     }
     
     /**
@@ -50,7 +71,6 @@ class SessionUrl extends ActiveRecord
     public static function getCurrentUrlId()
     {
         $result = false;
-        
         $sessionUrl = self::getLastVisitedUrl();
         if ($sessionUrl) {
             $result = $sessionUrl->id;
@@ -67,6 +87,7 @@ class SessionUrl extends ActiveRecord
     public static function getLastVisitedUrl($url = false)
     {
         $result = null;
+    
         $session = Session::findOne(['sessionStringId' => Session::getId()]);
         if ($session) {
             $query = self::find()
@@ -81,44 +102,40 @@ class SessionUrl extends ActiveRecord
     }
     
     /**
-     * save user's visit duration
-     *
-     * @param string $url url of the last visited page
-     * @param integer $duration seconds user's spent at the url
-     */
-    public static function saveDuration($url, $duration)
-    {
-        self::saveAttribute('duration', $url, $duration);
-    }
-    
-    /**
-     * save session Url attribute
+     * Save SessionUrl attribute with SessionUrl retieved by id or url
      *
      * @param string $attribute attribute identifier
      * @param string $url url of the last visited page
      * @param integer $value seconds user's spent at the url
+     * @param integer $sessionUrlId SessionUrl identifier
+     *
+     * @return bool|array either false or SessionUrl atributes
      */
-    public static function saveAttribute($attribute, $url, $value)
+    public static function saveAttribute($attribute, $url, $value, $sessionUrlId = 0)
     {
-        $sessionUrl = self::getLastVisitedUrl($url);
+        $result = false;
+        if ((int)$sessionUrlId > 0) {
+            $sessionUrl = self::findOne((int)$sessionUrlId);
+        } else {
+            $sessionUrl = self::getLastVisitedUrl($url);
+        }
+        
         if (($sessionUrl) && (isset($sessionUrl->{$attribute}))) {
             $sessionUrl->{$attribute} = $value;
-            $sessionUrl->save();
+            if ($sessionUrl->save()) {
+                $result = $sessionUrl->attributes;
+            }
         }
+        return $result;
     }
     
     /**
-     * {@inheritdoc}
+     * get session object
+     *
+     * @return ActiveQueryInterface
      */
-    public function behaviors()
+    public function getSession()
     {
-        return [
-            [
-                'class' => TimestampBehavior::class,
-                'createdAtAttribute' => 'createDate',
-                'updatedAtAttribute' => false,
-                'value' => new Expression('NOW()'),
-            ],
-        ];
+        return $this->hasOne(Session::class, ['id' => 'sessionId']);
     }
 }

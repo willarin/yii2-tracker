@@ -13,7 +13,7 @@ use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
 use yii\db\Expression;
-use yii\http\Cookie;
+use yii\web\Cookie;
 
 /**
  * Class Person

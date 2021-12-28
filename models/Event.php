@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2021 Solutlux LLC
+ * @copyright Copyright (c) 2020 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
@@ -36,18 +36,33 @@ class Event extends Model
     public $result;
     
     /**
+     * @var object
+     */
+    public $context;
+    
+    /**
+     * @var integer linked SessionEvent identifier
+     */
+    public $sessionEventId = 0;
+    
+    /**
      * creates event with its setting by identifier
      *
-     * @param string event identifier
+     * @param string $eventId event identifier
+     * @param bool|string|object $context context object for event
      * @return Event|boolean
      */
-    public static function getEvent($eventId)
+    public static function getEvent($eventId, $context = false)
     {
         $result = false;
-        $tracking = Yii::$app->getModule('tracking');
-        if ($tracking) {
-            if ((isset($tracking->events[$eventId]['trackingCodes'])) and is_array($tracking->events[$eventId]['trackingCodes'])) {
-                $result = new self($tracking->events[$eventId]);
+        $tracker = Yii::$app->getModule('tracker');
+        if ($tracker) {
+            if ((isset($tracker->events[$eventId]['trackingCodes'])) and is_array($tracker->events[$eventId]['trackingCodes'])) {
+                $eventData = $tracker->events[$eventId];
+                if ($context) {
+                    $eventData['context'] = $context;
+                }
+                $result = new self($eventData);
             }
         }
         
@@ -76,18 +91,23 @@ class Event extends Model
         $result = true;
         foreach ($this->trackingCodes as $trackingCodeData) {
             $trackingCode = new TrackingCode($trackingCodeData);
-            
+            $dataFunctionParams = $trackingCode->getFunctionParams($this, $trackingCode->dataParamsFunction, $trackingCode->dataParams);
             if ($trackingCode->type == 'postback') {
-                $codeUrlParams = array_merge($trackingCode->urlParams, $urlParams);
-                $codeDataParams = array_merge($trackingCode->dataParams, $dataParams);
-                $url = $trackingCode->url;
-                if (count($codeUrlParams) > 0) {
-                    $url .= '?' . http_build_query($codeUrlParams);
-                }
-                $codeResult = $trackingCode->sendPostback($url, $codeDataParams);
-                if (!$codeResult) {
-                    $result |= $codeResult;
-                    $this->result .= $codeResult->result . PHP_EOL;
+                $urlFunctionParams = $trackingCode->getFunctionParams($this, $trackingCode->urlParamsFunction, $trackingCode->urlParams);
+                if (($dataFunctionParams !== false) && ($urlFunctionParams !== false)) {
+                    $codeUrlParams = array_merge($trackingCode->urlParams, $urlParams, $urlFunctionParams);
+                    $codeDataParams = array_merge($trackingCode->dataParams, $dataParams, $dataFunctionParams);
+        
+                    $url = $trackingCode->url;
+                    if (count($codeUrlParams) > 0) {
+                        $url .= '?' . http_build_query($codeUrlParams);
+                    }
+        
+                    $codeResult = $trackingCode->sendPostback($url, $codeDataParams);
+                    if (!$codeResult) {
+                        $result |= $codeResult;
+                        $this->result .= $codeResult->result . PHP_EOL;
+                    }
                 }
             }
         }

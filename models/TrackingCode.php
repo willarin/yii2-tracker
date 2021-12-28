@@ -1,12 +1,14 @@
 <?php
 /**
- * @copyright Copyright (c) 2020 Solutlux LLC
+ * @copyright Copyright (c) 2021 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
 namespace willarin\tracker\models;
 
-use linslin\yii2\curl;
+use ReflectionClass;
+use ReflectionObject;
+use Yii;
 use yii\base\Model;
 
 /**
@@ -39,6 +41,16 @@ class TrackingCode extends Model
      * @var array
      */
     public $dataParams = [];
+    
+    /**
+     * @var string name of the function to retrieve url parameters
+     */
+    public $urlParamsFunction;
+    
+    /**
+     * @var string name of the function to retrieve data parameters
+     */
+    public $dataParamsFunction;
     
     /**
      * @var string
@@ -77,7 +89,7 @@ class TrackingCode extends Model
                 curl_setopt($curl, CURLOPT_POSTFIELDS, $postbackDataEncoded);
                 $postbackResult = curl_exec($curl);
                 $postbackResultText = ((is_array(@$postbackResult)) ? print_r($postbackResult, true) : @$postbackResult);
-                \Yii::info('URL: ' . $postbackUrl . PHP_EOL .
+                Yii::info('URL: ' . $postbackUrl . PHP_EOL .
                     'data: ' . print_r($postbackData, true) . PHP_EOL .
                     'result: ' . $postbackResultText . PHP_EOL, 'tracking');
                 
@@ -104,7 +116,7 @@ class TrackingCode extends Model
      */
     public static function buildUrl($url, $params, $addMissingParams = false)
     {
-        if (preg_match_all('/\{(.*)\}/Ui', $url, $matches)) {
+        if (preg_match_all('/{(.*)}/Ui', $url, $matches)) {
             //replace matched parameters
             foreach ($matches[1] as $var) {
                 $value = null;
@@ -129,5 +141,38 @@ class TrackingCode extends Model
             }
         }
         return $url;
+    }
+    
+    /**
+     * retrieve parameters with function request
+     *
+     * @param Event $event
+     * @param string $paramsFunction name of params function
+     * @param array $params list of parameters to be sent for tracking function
+     *
+     * @return boolean|string
+     */
+    public function getFunctionParams($event, $paramsFunction, $params = [])
+    {
+        $result = [];
+        if ($paramsFunction) {
+            if (is_object($event->context)) {
+                $reflection = new ReflectionObject($event->context);
+            } else {
+                $reflection = new ReflectionClass($event->context);
+                $event->context = $reflection->newInstance();
+            }
+            if ($reflection->hasMethod($paramsFunction)) {
+                $dataMethod = $reflection->getMethod($paramsFunction);
+                $params['sessionEventId'] = $event->sessionEventId;
+                $trackingCodeDataParams = $dataMethod->invokeArgs($event->context, $params);
+                if ((is_array($trackingCodeDataParams)) and (count($trackingCodeDataParams) > 0)) {
+                    $result = $trackingCodeDataParams;
+                } else {
+                    $result = false;
+                }
+            }
+        }
+        return $result;
     }
 }

@@ -9,8 +9,9 @@
 
 namespace willarin\tracker\models;
 
-
+use Yii;
 use yii\behaviors\TimestampBehavior;
+use yii\db\ActiveQueryInterface;
 use yii\db\ActiveRecord;
 use yii\db\Expression;
 
@@ -29,29 +30,6 @@ class SessionEvent extends ActiveRecord
     }
     
     /**
-     * save event
-     *
-     * @param string $name
-     * @param mixed $params
-     * @param integer $sessionUrlId sessionUrlId identifier for the event page
-     */
-    public static function saveEvent($name, $params, $sessionUrlId = 0)
-    {
-        if ($sessionUrlId == 0) {
-            $sessionUrl = SessionUrl::getLastVisitedUrl();
-            if ($sessionUrl) {
-                $sessionUrlId = $sessionUrl->id;
-            }
-        }
-        
-        $event = new self();
-        $event->sessionUrlId = (int)$sessionUrlId;
-        $event->eventName = (string)$name;
-        $event->params = json_encode($params);
-        $event->save();
-    }
-    
-    /**
      * {@inheritdoc}
      */
     public function behaviors()
@@ -64,5 +42,65 @@ class SessionEvent extends ActiveRecord
                 'value' => new Expression('NOW()'),
             ],
         ];
+    }
+    
+    /**
+     * save event
+     */
+    public static function saveEvent()
+    {
+        $request = Yii::$app->request;
+        $sessionUrlId = $request->getQueryParam('sessionUrlId', 0);
+        if ($sessionUrlId == 0) {
+            $sessionUrl = SessionUrl::getLastVisitedUrl($request->getQueryParam('url'));
+            if ($sessionUrl) {
+                $sessionUrlId = $sessionUrl->id;
+            }
+        }
+        
+        $sessionEvent = new self();
+        $sessionEvent->sessionUrlId = (int)$sessionUrlId;
+        $sessionEvent->eventName = $request->getQueryParam('name', '');
+        $sessionEvent->params = json_encode($request->getQueryParam('params', ''));
+        $sessionEventSave = $sessionEvent->save();
+        
+        $cookieParams = $request->getQueryParam('cookieParams');
+        if (is_array($cookieParams)) {
+            if (!isset($sessionUrl)) {
+                $sessionUrl = SessionUrl::findOne((int)$sessionUrlId);
+            }
+            if ($sessionUrl) {
+                $cookieParamsStorage = json_decode($sessionUrl->session->cookieParams);
+                foreach ($cookieParams as $cookieParamName => $cookieParamValue) {
+                    if (!isset($cookieParamsStorage->{$cookieParamName})) {
+                        $cookieParamsStorage[$cookieParamName] = [
+                            'name' => $cookieParamName,
+                            'value' => $cookieParamValue
+                        ];
+                        
+                        $sessionUrl->session->cookieParams = json_encode($cookieParamsStorage);
+                        $sessionUrl->session->save();
+                    }
+                }
+            }
+        }
+        
+        if ($sessionEventSave) {
+            $event = Event::getEvent($sessionEvent->eventName);
+            if ($event) {
+                $event->sessionEventId = (int)$sessionEvent->id;
+                $event->track();
+            }
+        }
+    }
+    
+    /**
+     * get SessionUrl object
+     *
+     * @return ActiveQueryInterface
+     */
+    public function getSessionUrl()
+    {
+        return $this->hasOne(SessionUrl::className(), ['id' => 'sessionUrlId']);
     }
 }
