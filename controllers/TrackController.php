@@ -38,7 +38,7 @@ class TrackController extends Controller
         $result = false;
         $request = Yii::$app->request;
         if (($request->getQueryParam('sessionUrlId') !== null) || ($request->getQueryParam('url') !== null)) {
-            $result = SessionUrl::saveAttribute('duration', $request->getQueryParam('sessionUrlId'), $request->getQueryParam('url'), $request->getQueryParam('time', 0));
+            $result = SessionUrl::saveAttribute('duration', $request->getQueryParam('url'), $request->getQueryParam('time', 0), $request->getQueryParam('sessionUrlId'));
         }
         Yii::$app->response->format = Response::FORMAT_JSON;
         return $result;
@@ -59,7 +59,7 @@ class TrackController extends Controller
             $direction = 'Down';
         }
         if (($request->getQueryParam('sessionUrlId') !== null) || ($request->getQueryParam('url') !== null)) {
-            $result = SessionUrl::saveAttribute('scrolls' . $direction, $request->getQueryParam('sessionUrlId'), $request->getQueryParam('url'), $request->getQueryParam('number', 1));
+            $result = SessionUrl::saveAttribute('scrolls' . $direction, $request->getQueryParam('url'), $request->getQueryParam('number', 1), $request->getQueryParam('sessionUrlId'));
         }
         Yii::$app->response->format = Response::FORMAT_JSON;
         return $result;
