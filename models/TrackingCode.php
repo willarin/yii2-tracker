@@ -91,7 +91,7 @@ class TrackingCode extends Model
                 $postbackResultText = ((is_array(@$postbackResult)) ? print_r($postbackResult, true) : @$postbackResult);
                 Yii::info('URL: ' . $postbackUrl . PHP_EOL .
                     'data: ' . print_r($postbackData, true) . PHP_EOL .
-                    'result: ' . $postbackResultText . PHP_EOL, 'tracking');
+                    'result: ' . $postbackResultText . PHP_EOL, 'tracker');
                 
                 if ($postbackResult) {
                     $result = true;
@@ -164,7 +164,7 @@ class TrackingCode extends Model
             }
             if ($reflection->hasMethod($paramsFunction)) {
                 $dataMethod = $reflection->getMethod($paramsFunction);
-                $params['sessionEventId'] = $event->sessionEventId;
+                $params = array('sessionEventId' => $event->sessionEventId) + $params;
                 $trackingCodeDataParams = $dataMethod->invokeArgs($event->context, $params);
                 if ((is_array($trackingCodeDataParams)) and (count($trackingCodeDataParams) > 0)) {
                     $result = $trackingCodeDataParams;

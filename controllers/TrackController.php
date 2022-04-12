@@ -8,9 +8,9 @@
 namespace willarin\tracker\controllers;
 
 use Exception;
+use Yii;
 use willarin\tracker\models\SessionEvent;
 use willarin\tracker\models\SessionUrl;
-use Yii;
 use yii\web\Controller;
 use yii\web\Response;
 
@@ -76,4 +76,36 @@ class TrackController extends Controller
         SessionEvent::saveEvent();
         return false;
     }
+    
+    /**
+     * update cookieParams data of session
+     */
+    public function actionCookiesData()
+    {
+        SessionUrl::updateCookieParams();
+        return false;
+    }
+    
+    /**
+     * track urt visit, the request should be in the form of [url]/tracker/track/duration?time=[time]&url=[encodedUrl]
+     *
+     * @return bool|array either false or SessionUrl identifier
+     * @throws Exception
+     */
+    public function actionVisit()
+    {
+        $result = false;
+        $request = Yii::$app->request;
+        $url = $request->getQueryParam('url', '');
+        if ($url) {
+            $sessionUrl = SessionUrl::saveUrlVisit($url);
+            if (($sessionUrl) and (isset($sessionUrl->id))) {
+                $result = $sessionUrl->id;
+            }
+        }
+        
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        return $result;
+    }
+    
 }

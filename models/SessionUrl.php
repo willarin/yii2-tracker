@@ -46,17 +46,22 @@ class SessionUrl extends ActiveRecord
     
     /**
      * save user's url visit
+     * @param string $url url of the last visited page
      *
      * @return bool/SessionUrl
      */
-    public static function saveUrlVisit()
+    public static function saveUrlVisit($url = '')
     {
         $session = Session::getCurrent();
         $result = false;
         if ($session) {
             $sessionUrl = new self();
             $sessionUrl->sessionId = $session->id;
-            $sessionUrl->visitedUrl = urldecode(Yii::$app->request->getAbsoluteUrl());
+            if ($url) {
+                $sessionUrl->visitedUrl = urldecode($url);
+            } else {
+                $sessionUrl->visitedUrl = urldecode(Yii::$app->request->getAbsoluteUrl());
+            }
             $sessionUrl->save();
             $result = $sessionUrl;
         }
@@ -64,13 +69,36 @@ class SessionUrl extends ActiveRecord
     }
     
     /**
-     * get current session Url id
+     * get current sessionUrl
+     *
+     * @param string $url url of the last visited page
+     * @param integer $sessionUrlId SessionUrl identifier
+     * @return mixed bool|SessionUrl
+     */
+    public static function getCurrent($url = '', int $sessionUrlId = 0)
+    {
+        $sessionUrl = false;
+        
+        if ((int)$sessionUrlId > 0) {
+            $sessionUrl = self::findOne((int)$sessionUrlId);
+        }
+        
+        if (!$sessionUrl) {
+            $sessionUrl = self::getLastVisitedUrl($url);
+        }
+        
+        return $sessionUrl;
+    }
+    
+    /**
+     * get current sessionUrl id
      *
      * @return bool|integer
      */
     public static function getCurrentUrlId()
     {
         $result = false;
+        $request = Yii::$app->request;
         $sessionUrl = self::getLastVisitedUrl();
         if ($sessionUrl) {
             $result = $sessionUrl->id;
@@ -80,14 +108,14 @@ class SessionUrl extends ActiveRecord
     
     /**
      * Retrieve the last visited URL from database
-     * @param bool|string $url url of the last visited page
+     * @param string $url url of the last visited page
      *
      * @return array|ActiveRecord|null
      */
-    public static function getLastVisitedUrl($url = false)
+    public static function getLastVisitedUrl($url = '')
     {
         $result = null;
-    
+        
         $session = Session::findOne(['sessionStringId' => Session::getId()]);
         if ($session) {
             $query = self::find()
@@ -99,6 +127,23 @@ class SessionUrl extends ActiveRecord
                 ->one();
         }
         return $result;
+    }
+    
+    /**
+     * update cookie params with GET request
+     *
+     * @return mixed bool|SessionUrl
+     */
+    public static function updateCookieParams()
+    {
+        $sessionUrl = false;
+        $request = Yii::$app->request;
+        $sessionUrl = SessionUrl::getCurrent($request->getQueryParam('url', ''), (int)$request->getQueryParam('sessionUrlId', 0));
+        $cookieParams = $request->getQueryParam('cookieParams');
+        if (($sessionUrl) && (is_array($cookieParams))) {
+            $sessionUrl->session->addCookieParams($cookieParams);
+        }
+        return $sessionUrl;
     }
     
     /**
@@ -114,11 +159,7 @@ class SessionUrl extends ActiveRecord
     public static function saveAttribute($attribute, $url, $value, $sessionUrlId = 0)
     {
         $result = false;
-        if ((int)$sessionUrlId > 0) {
-            $sessionUrl = self::findOne((int)$sessionUrlId);
-        } else {
-            $sessionUrl = self::getLastVisitedUrl($url);
-        }
+        $sessionUrl = self::getCurrent($url, $sessionUrlId);
         
         if (($sessionUrl) && (isset($sessionUrl->{$attribute}))) {
             $sessionUrl->{$attribute} = $value;

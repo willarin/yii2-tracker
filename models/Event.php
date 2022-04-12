@@ -102,7 +102,6 @@ class Event extends Model
                     if (count($codeUrlParams) > 0) {
                         $url .= '?' . http_build_query($codeUrlParams);
                     }
-        
                     $codeResult = $trackingCode->sendPostback($url, $codeDataParams);
                     if (!$codeResult) {
                         $result |= $codeResult;

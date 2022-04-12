@@ -9,8 +9,8 @@
 
 namespace willarin\tracker\models;
 
-use Jenssegers\Agent\Agent;
 use Yii;
+use Jenssegers\Agent\Agent;
 use yii\base\InvalidConfigException;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
@@ -90,5 +90,31 @@ class Session extends ActiveRecord
                 'value' => new Expression('NOW()'),
             ],
         ];
+    }
+    
+    /**
+     * add array of cookie params
+     *
+     * @param array $params
+     */
+    public function addCookieParams(array $params)
+    {
+        if ((is_array($params)) and (count($params) > 0)) {
+            $cookieParamsStorage = (array)json_decode($this->cookieParams);
+            $update = false;
+            foreach ($params as $cookieParamName => $cookieParamValue) {
+                if (!isset($cookieParamsStorage[$cookieParamName])) {
+                    $cookieParamsStorage[$cookieParamName] = [
+                        'name' => $cookieParamName,
+                        'value' => $cookieParamValue
+                    ];
+                    $update = true;
+                }
+            }
+            if ($update) {
+                $this->cookieParams = json_encode($cookieParamsStorage);
+                $this->save();
+            }
+        }
     }
 }
