@@ -24,7 +24,7 @@
         "ext-curl": "*",
         "yiisoft/yii2": "~2.0.14",
         "bariew/yii2-event-component": "*",
-        "jenssegers/agent": "3.0.x-dev"
+        "jenssegers/agent": "dev-master"
     },
     "require-dev": {
     },

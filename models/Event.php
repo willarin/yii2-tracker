@@ -7,13 +7,12 @@
 namespace willarin\tracker\models;
 
 use Yii;
-use yii\base\Model;
 
 /**
  * Class Event
  * @package willarin\tracker\models
  */
-class Event extends Model
+class Event extends \yii\base\Event
 {
     /**
      * @event AfterSaveEvent tracking event
@@ -29,6 +28,11 @@ class Event extends Model
      * @var array
      */
     public $trackingCodes = [];
+    
+    /**
+     * @var array
+     */
+    public $trackingCodeObjects = [];
     
     /**
      * @var string
@@ -70,13 +74,21 @@ class Event extends Model
     }
     
     /**
-     * @return array
+     * Launch all event tracking codes
+     *
+     * @param $id string
+     * @return mixed bool/TrackingCode
      */
-    public function rules()
+    public function getTrackingCode($id)
     {
-        return [
-            [['debug'], 'boolean'],
-        ];
+        if (!isset($this->trackingCodeObjects[$id])) {
+            if (isset($this->trackingCodes[$id])) {
+                $this->trackingCodeObjects[$id] = new TrackingCode($this->trackingCodes[$id]);
+            } else {
+                $this->trackingCodeObjects[$id] = false;
+            }
+        }
+        return $this->trackingCodeObjects[$id];
     }
     
     /**
@@ -89,23 +101,26 @@ class Event extends Model
     public function track($urlParams = [], $dataParams = [])
     {
         $result = true;
-        foreach ($this->trackingCodes as $trackingCodeData) {
-            $trackingCode = new TrackingCode($trackingCodeData);
-            $dataFunctionParams = $trackingCode->getFunctionParams($this, $trackingCode->dataParamsFunction, $trackingCode->dataParams);
-            if ($trackingCode->type == 'postback') {
-                $urlFunctionParams = $trackingCode->getFunctionParams($this, $trackingCode->urlParamsFunction, $trackingCode->urlParams);
-                if (($dataFunctionParams !== false) && ($urlFunctionParams !== false)) {
-                    $codeUrlParams = array_merge($trackingCode->urlParams, $urlParams, $urlFunctionParams);
-                    $codeDataParams = array_merge($trackingCode->dataParams, $dataParams, $dataFunctionParams);
-        
-                    $url = $trackingCode->url;
-                    if (count($codeUrlParams) > 0) {
-                        $url .= '?' . http_build_query($codeUrlParams);
-                    }
-                    $codeResult = $trackingCode->sendPostback($url, $codeDataParams);
-                    if (!$codeResult) {
-                        $result |= $codeResult;
-                        $this->result .= $codeResult->result . PHP_EOL;
+        foreach ($this->trackingCodes as $id => $trackingCodeData) {
+            $trackingCode = $this->getTrackingCode($id);
+            if ($trackingCode) {
+                $dataFunctionParams = $trackingCode->getFunctionParams($this, $trackingCode->dataParamsFunction, $trackingCode->dataParams);
+                if ($trackingCode->type == 'postback') {
+                    $urlFunctionParams = $trackingCode->getFunctionParams($this, $trackingCode->urlParamsFunction, $trackingCode->urlParams);
+                    if (($dataFunctionParams !== false) && ($urlFunctionParams !== false)) {
+                        $codeUrlParams = array_merge($trackingCode->urlParams, $urlParams, $urlFunctionParams);
+                        $codeDataParams = array_merge($trackingCode->dataParams, $dataParams, $dataFunctionParams);
+                    
+                        $url = $trackingCode->url;
+                        if (count($codeUrlParams) > 0) {
+                            $url .= '?' . http_build_query($codeUrlParams);
+                        }
+                    
+                        $codeResult = $trackingCode->sendPostback($url, $codeDataParams);
+                        if (!$codeResult) {
+                            $result |= $codeResult;
+                            $this->result .= $codeResult->result . PHP_EOL;
+                        }
                     }
                 }
             }
