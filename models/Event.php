@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2020 Solutlux LLC
+ * @copyright Copyright (c) 2020-2022 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
@@ -14,11 +14,6 @@ use Yii;
  */
 class Event extends \yii\base\Event
 {
-    /**
-     * @event AfterSaveEvent tracking event
-     */
-    const EVENT_TRACK_EVENT = 'trackEvent';
-    
     /**
      * @var boolean debug mode
      */
@@ -74,7 +69,7 @@ class Event extends \yii\base\Event
     }
     
     /**
-     * Launch all event tracking codes
+     * Retrieve tracking code by identifier
      *
      * @param $id string
      * @return mixed bool/TrackingCode
@@ -105,12 +100,12 @@ class Event extends \yii\base\Event
             $trackingCode = $this->getTrackingCode($id);
             if ($trackingCode) {
                 $dataFunctionParams = $trackingCode->getFunctionParams($this, $trackingCode->dataParamsFunction, $trackingCode->dataParams);
-                if ($trackingCode->type == 'postback') {
+                if (in_array($trackingCode->type, ['postback', 'get'])) {
                     $urlFunctionParams = $trackingCode->getFunctionParams($this, $trackingCode->urlParamsFunction, $trackingCode->urlParams);
                     if (($dataFunctionParams !== false) && ($urlFunctionParams !== false)) {
                         $codeUrlParams = array_merge($trackingCode->urlParams, $urlParams, $urlFunctionParams);
                         $codeDataParams = array_merge($trackingCode->dataParams, $dataParams, $dataFunctionParams);
-                    
+            
                         $url = $trackingCode->url;
                         if (count($codeUrlParams) > 0) {
                             $url .= '?' . http_build_query($codeUrlParams);
