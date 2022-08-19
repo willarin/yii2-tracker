@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2020-2022 Solutlux LLC
+ * @copyright Copyright (c) 2020 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
@@ -14,6 +14,11 @@ use Yii;
  */
 class Event extends \yii\base\Event
 {
+    /**
+     * @event AfterSaveEvent tracking event
+     */
+    const EVENT_TRACK_EVENT = 'trackEvent';
+    
     /**
      * @var boolean debug mode
      */
@@ -49,11 +54,11 @@ class Event extends \yii\base\Event
      *
      * @param string $eventId event identifier
      * @param bool|string|object $context context object for event
-     * @return Event|boolean
+     * @return Event|null
      */
     public static function getEvent($eventId, $context = false)
     {
-        $result = false;
+        $result = null;
         $tracker = Yii::$app->getModule('tracker');
         if ($tracker) {
             if ((isset($tracker->events[$eventId]['trackingCodes'])) and is_array($tracker->events[$eventId]['trackingCodes'])) {
@@ -69,7 +74,7 @@ class Event extends \yii\base\Event
     }
     
     /**
-     * Retrieve tracking code by identifier
+     * Launch all event tracking codes
      *
      * @param $id string
      * @return mixed bool/TrackingCode
@@ -105,7 +110,7 @@ class Event extends \yii\base\Event
                     if (($dataFunctionParams !== false) && ($urlFunctionParams !== false)) {
                         $codeUrlParams = array_merge($trackingCode->urlParams, $urlParams, $urlFunctionParams);
                         $codeDataParams = array_merge($trackingCode->dataParams, $dataParams, $dataFunctionParams);
-            
+    
                         $url = $trackingCode->url;
                         if (count($codeUrlParams) > 0) {
                             $url .= '?' . http_build_query($codeUrlParams);
