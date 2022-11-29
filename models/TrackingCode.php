@@ -1,13 +1,12 @@
 <?php
 /**
- * @copyright Copyright (c) 2020-2022 Solutlux LLC
+ * @copyright Copyright (c) 2020 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
 namespace willarin\tracker\models;
 
 use ReflectionClass;
-use ReflectionException;
 use ReflectionObject;
 use Yii;
 use yii\base\Model;
@@ -99,16 +98,29 @@ class TrackingCode extends Model
                 }
     
                 curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($curl, CURLOPT_VERBOSE, true);
+                curl_setopt($curl, CURLINFO_HEADER_OUT, true);
+    
+                $verbose = fopen('php://temp', 'w+');
+    
+                curl_setopt($curl, CURLOPT_STDERR, $verbose);
     
                 $postbackResult = curl_exec($curl);
     
+                $info = curl_getinfo($curl, CURLINFO_HEADER_OUT);
+    
+                rewind($verbose);
+    
+                $verboseLog = stream_get_contents($verbose);
     
                 $postbackResultText = ((is_array(@$postbackResult)) ? print_r($postbackResult, true) : @$postbackResult);
                 Yii::info('URL: ' . $postbackUrl . PHP_EOL .
                     'headers: ' . print_r($this->headers, true) . PHP_EOL .
+                    'verbose log ' . print_r($verboseLog, true) . PHP_EOL .
+                    'request: ' . print_r($info, true) . PHP_EOL .
                     'data: ' . print_r($postbackData, true) . PHP_EOL .
                     'result: ' . $postbackResultText . PHP_EOL, 'tracker');
-                
+    
                 if ($postbackResult) {
                     $result = true;
                 } else {
@@ -126,7 +138,7 @@ class TrackingCode extends Model
      * build url using parameters
      *
      * @param $url string url with patterns
-     * @param $params array current list of url parameters
+     * @param $params
      * @param bool $addMissingParams
      * @return mixed|string
      */
@@ -165,8 +177,8 @@ class TrackingCode extends Model
      * @param Event $event
      * @param string $paramsFunction name of params function
      * @param array $params list of parameters to be sent for tracking function
+     *
      * @return boolean|string
-     * @throws ReflectionException
      */
     public function getFunctionParams($event, $paramsFunction, $params = [])
     {

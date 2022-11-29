@@ -3,7 +3,7 @@
  * Person handler
  *
  * @link https://github.com/willarin/yii2-tracker
- * @copyright Copyright (c) 2021 Solutlux LLC
+ * @copyright Copyright (c) 2020 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
@@ -39,7 +39,7 @@ class Person extends ActiveRecord
      */
     public static function getId($personIdentifier)
     {
-        $cookieStringId = Yii::$app->response->cookies->get('personId');
+        $cookieStringId = Yii::$app->request->cookies->get('personId');
         if ($cookieStringId === null) {
             $cookieStringId = $personIdentifier;
         }
@@ -59,6 +59,7 @@ class Person extends ActiveRecord
         }
         return $person->getPrimaryKey();
     }
+    
     
     /**
      * {@inheritdoc}

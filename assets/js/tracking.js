@@ -1,4 +1,4 @@
-let tm = 0;
+tm = 0;
 
 if (typeof (timerSendInterval) === 'undefined') {
     timerSendInterval = 5;

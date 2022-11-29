@@ -3,19 +3,20 @@
  * Session recording functions
  *
  * @link https://github.com/willarin/yii2-tracker
- * @copyright Copyright (c) 2021 Solutlux LLC
+ * @copyright Copyright (c) 2020 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
 namespace willarin\tracker\models;
 
-use Yii;
 use Jenssegers\Agent\Agent;
 use yii\base\InvalidConfigException;
 use yii\behaviors\TimestampBehavior;
+use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 use yii\db\Exception;
 use yii\db\Expression;
+use Yii;
 
 /**
  * Class Session
@@ -78,6 +79,16 @@ class Session extends ActiveRecord
     }
     
     /**
+     * Saves person id into sessions table
+     * @param $personId int
+     * @return int
+     */
+    public static function savePerson(int $personId)
+    {
+        return self::updateAll(['personId' => $personId], ['sessionStringId' => self::getId()]);
+    }
+    
+    /**
      * {@inheritdoc}
      */
     public function behaviors()
@@ -116,5 +127,14 @@ class Session extends ActiveRecord
                 $this->save();
             }
         }
+    }
+    
+    /**
+     * get Person associated with the current session
+     * @return ActiveQuery
+     */
+    public function getPerson()
+    {
+        return $this->hasOne(Person::class, ['id' => 'personId']);
     }
 }

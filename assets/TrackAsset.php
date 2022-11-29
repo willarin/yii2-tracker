@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright Copyright (c) 2021 Solutlux LLC
+ * @copyright Copyright (c) 2020 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 

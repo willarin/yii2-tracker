@@ -3,17 +3,18 @@
  * Session URL visit recording functions
  *
  * @link https://github.com/willarin/yii2-tracker
- * @copyright Copyright (c) 2021 Solutlux LLC
+ * @copyright Copyright (c) 2020 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
 namespace willarin\tracker\models;
 
-use Yii;
+use willarin\tracker\behaviors\AttrCutBehavior;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveQueryInterface;
 use yii\db\ActiveRecord;
 use yii\db\Expression;
+use Yii;
 
 /**
  * Class SessionUrl
@@ -30,18 +31,22 @@ class SessionUrl extends ActiveRecord
     }
     
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function behaviors()
     {
-        return [
-            [
-                'class' => TimestampBehavior::class,
-                'createdAtAttribute' => 'createDate',
-                'updatedAtAttribute' => false,
-                'value' => new Expression('NOW()'),
-            ],
+        $behaviors = parent::behaviors();
+        $behaviors[] = [
+            'class' => AttrCutBehavior::class
         ];
+        $behaviors[] = [
+            'class' => TimestampBehavior::class,
+            'createdAtAttribute' => 'createDate',
+            'updatedAtAttribute' => false,
+            'value' => new Expression('NOW()'),
+        ];
+    
+        return $behaviors;
     }
     
     /**
@@ -151,18 +156,17 @@ class SessionUrl extends ActiveRecord
      *
      * @param string $attribute attribute identifier
      * @param string $url url of the last visited page
-     * @param integer $value seconds user's spent at the url
+     * @param integer $value attribute value to be saved
      * @param integer $sessionUrlId SessionUrl identifier
      *
      * @return bool|array either false or SessionUrl atributes
      */
-    public static function saveAttribute($attribute, $url, $value, $sessionUrlId = 0)
+    public static function saveAttribute($attribute, $url, $value, int $sessionUrlId = 0)
     {
         $result = false;
         $sessionUrl = self::getCurrent($url, $sessionUrlId);
-        
-        if (($sessionUrl) && (isset($sessionUrl->{$attribute}))) {
-            $sessionUrl->{$attribute} = $value;
+        if (($sessionUrl) and ($sessionUrl->hasAttribute($attribute))) {
+            $sessionUrl->setAttribute($attribute, $value);
             if ($sessionUrl->save()) {
                 $result = $sessionUrl->attributes;
             }

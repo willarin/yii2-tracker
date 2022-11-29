@@ -1,7 +1,7 @@
 <?php
 /**
  * @link https://github.com/willarin/yii2-tracker
- * @copyright Copyright (c) 2021 Solutlux LLC
+ * @copyright Copyright (c) 2020 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
@@ -38,7 +38,7 @@ class TrackController extends Controller
         $result = false;
         $request = Yii::$app->request;
         if (($request->getQueryParam('sessionUrlId') !== null) || ($request->getQueryParam('url') !== null)) {
-            $result = SessionUrl::saveAttribute('duration', $request->getQueryParam('url'), $request->getQueryParam('time', 0), $request->getQueryParam('sessionUrlId'));
+            $result = SessionUrl::saveAttribute('duration', $request->getQueryParam('url'), $request->getQueryParam('time', 0), (int)$request->getQueryParam('sessionUrlId'));
         }
         Yii::$app->response->format = Response::FORMAT_JSON;
         return $result;
@@ -59,7 +59,7 @@ class TrackController extends Controller
             $direction = 'Down';
         }
         if (($request->getQueryParam('sessionUrlId') !== null) || ($request->getQueryParam('url') !== null)) {
-            $result = SessionUrl::saveAttribute('scrolls' . $direction, $request->getQueryParam('url'), $request->getQueryParam('number', 1), $request->getQueryParam('sessionUrlId'));
+            $result = SessionUrl::saveAttribute('scrolls' . $direction, $request->getQueryParam('url'), $request->getQueryParam('number', 1), (int)$request->getQueryParam('sessionUrlId'));
         }
         Yii::$app->response->format = Response::FORMAT_JSON;
         return $result;
