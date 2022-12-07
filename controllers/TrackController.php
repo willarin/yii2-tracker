@@ -73,7 +73,16 @@ class TrackController extends Controller
      */
     public function actionIndex()
     {
-        SessionEvent::saveEvent();
+        $sessionUrlId = (int)Yii::$app->request->getQueryParam('sessionUrlId');
+        $eventName = Yii::$app->request->getQueryParam('name', '');
+        $params = Yii::$app->request->getQueryParam('params', []);
+        if (!is_array($params)) {
+            $params = [$params];
+        }
+    
+        if ($sessionUrlId > 0) {
+            SessionEvent::saveOnlyEventInSession($sessionUrlId, $eventName, $params);
+        }
         return false;
     }
     

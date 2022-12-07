@@ -77,8 +77,8 @@ class SessionEvent extends ActiveRecord
         $sessionEvent->eventName = $eventName;
         $sessionEvent->params = json_encode($params);
         $sessionEventSave = $sessionEvent->save();
-        
-        //\Yii::info(' Event: ' . $sessionEvent->id . PHP_EOL . print_r($request->getQueryParams(), true) . PHP_EOL, 'tracker');
+    
+        //Yii::info(' Event: ' . $sessionEvent->id . PHP_EOL . print_r(Yii::$app->request->getQueryParams(), true) . PHP_EOL, 'tracker');
         if ($sessionEventSave) {
             $event = Event::getEvent($sessionEvent->eventName);
             if ($event) {
@@ -95,7 +95,7 @@ class SessionEvent extends ActiveRecord
     {
         $request = Yii::$app->request;
         $sessionUrl = SessionUrl::updateCookieParams();
-        
+    
         if ($sessionUrl) {
             $params = $request->getQueryParam('params', []);
             self::saveEvent($sessionUrl->id, $request->getQueryParam('name', ''), $params);
