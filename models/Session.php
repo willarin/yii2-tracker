@@ -3,7 +3,7 @@
  * Session recording functions
  *
  * @link https://github.com/willarin/yii2-tracker
- * @copyright Copyright (c) 2020 Solutlux LLC
+ * @copyright Copyright (c) 2021 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
@@ -86,6 +86,20 @@ class Session extends ActiveRecord
     public static function savePerson(int $personId)
     {
         return self::updateAll(['personId' => $personId], ['sessionStringId' => self::getId()]);
+    }
+    
+    /**
+     * replace previous sessions urls with new session identifier
+     * @param int $sessionId
+     */
+    public function replaceSessionUrls(int $newSessionId)
+    {
+        SessionUrl::updateAll(['sessionId' => $newSessionId], ['sessionId' => $this->id]);
+        $person = $this->person;
+        if ($person) {
+            $person->delete();
+        }
+        $this->delete();
     }
     
     /**

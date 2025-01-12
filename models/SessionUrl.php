@@ -3,13 +3,15 @@
  * Session URL visit recording functions
  *
  * @link https://github.com/willarin/yii2-tracker
- * @copyright Copyright (c) 2020 Solutlux LLC
+ * @copyright Copyright (c) 2021 Solutlux LLC
  * @license https://opensource.org/licenses/BSD-3-Clause BSD License (3-clause)
  */
 
 namespace willarin\tracker\models;
 
+use Exception;
 use willarin\tracker\behaviors\AttrCutBehavior;
+use yii\base\Event;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveQueryInterface;
 use yii\db\ActiveRecord;
@@ -22,6 +24,11 @@ use Yii;
  */
 class SessionUrl extends ActiveRecord
 {
+    /**
+     * @var string gateway request event
+     */
+    const EVENT_UPDATE_ATTRIBUTE = 'updateAttribute';
+    
     /**
      * @return string the name of the index associated with this ActiveRecord class.
      */
@@ -45,7 +52,7 @@ class SessionUrl extends ActiveRecord
             'updatedAtAttribute' => false,
             'value' => new Expression('NOW()'),
         ];
-    
+        
         return $behaviors;
     }
     
@@ -57,18 +64,30 @@ class SessionUrl extends ActiveRecord
      */
     public static function saveUrlVisit($url = '')
     {
-        $session = Session::getCurrent();
         $result = false;
-        if ($session) {
-            $sessionUrl = new self();
-            $sessionUrl->sessionId = $session->id;
-            if ($url) {
-                $sessionUrl->visitedUrl = urldecode($url);
-            } else {
-                $sessionUrl->visitedUrl = urldecode(Yii::$app->request->getAbsoluteUrl());
+        try {
+            $session = Session::getCurrent();
+            
+            if ($session) {
+                $scdid = (int)Yii::$app->request->getQueryParam('scdid', 0);
+                //update previous session (from another domain)
+                if ($scdid > 0) {
+                    $previousSession = Session::findOne($scdid);
+                    if (($previousSession) and ($previousSession->id <> $session->id)) {
+                        $previousSession->replaceSessionUrls($session->id);
+                    }
+                }
+                $sessionUrl = new self();
+                $sessionUrl->sessionId = $session->id;
+                if ($url) {
+                    $sessionUrl->visitedUrl = urldecode($url);
+                } else {
+                    $sessionUrl->visitedUrl = urldecode(Yii::$app->request->getAbsoluteUrl());
+                }
+                $sessionUrl->save();
+                $result = $sessionUrl;
             }
-            $sessionUrl->save();
-            $result = $sessionUrl;
+        } catch (Exception $e) {
         }
         return $result;
     }
@@ -167,6 +186,7 @@ class SessionUrl extends ActiveRecord
         $sessionUrl = self::getCurrent($url, $sessionUrlId);
         if (($sessionUrl) and ($sessionUrl->hasAttribute($attribute))) {
             $sessionUrl->setAttribute($attribute, $value);
+            $sessionUrl->trigger(self::EVENT_UPDATE_ATTRIBUTE, new Event());
             if ($sessionUrl->save()) {
                 $result = $sessionUrl->attributes;
             }
